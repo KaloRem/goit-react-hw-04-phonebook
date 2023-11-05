@@ -1,93 +1,84 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { nanoid } from 'nanoid';
 import { ContactForm } from './ContactForm/ContactForm';
-import { Contactlist } from './ContactList/ContactList';
+import { ContactList } from './ContactList/ContactList';
 import { SearchFilter } from './SearchFilter/SearchFilter';
 
-export class App extends Component {
-  state = {
-    contacts: [],
-    filter: "",
-  };
+export const App = () => {
+  const [contacts, setContacts] = useState([]);
+  const [filter, setFilter] = useState('');
 
-  componentDidMount(prevProps, prevState) {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
-
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
+  useEffect(() => {
+    if (contacts.length > 0) {
+      localStorage.setItem('contacts', JSON.stringify(contacts));
     }
-  }
+  }, [contacts]);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+  useEffect(() => {
+    const savedContacts = JSON.parse(localStorage.getItem('contacts'));
+    if (savedContacts) {
+      setContacts(savedContacts);
     }
-  }
+  }, []);
 
-  addContact = newContact => {
-    const { contacts } = this.state;
+  const addContact = newContact => {
     const { name, number } = newContact;
-    const isExist = this.isInPhonebook(name);
+    const isExist = isInPhonebook(name);
     if (isExist) {
-      alert(`${newContact.name} Is already in contacts.`);
+      alert(`${name} is already in contacts.`);
       return;
     }
     const contact = {
-      name: name,
+      name,
       id: nanoid(),
-      number: number,
+      number,
     };
-    this.setState({ contacts: [...contacts, contact] });
+
+    setContacts(prev => [...prev, contact]);
   };
 
-  deleteContact = e => {
-    const { contacts } = this.state;
-    const id = e.target.closest('li').id;
-    const contactsAfterDelete = contacts.filter(contact => contact.id !== id);
-    this.setState({ contacts: contactsAfterDelete });
-  };
-
-  searchContact = e => {
-    const filter = e.target.value;
-    this.setState({ filter });
-  };
-
-  getFilteredContacts = () => {
-    const { contacts, filter } = this.state;
-    return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(filter.toLowerCase())
+    const deleteContact = contactId => {
+    setContacts(prevContacts =>
+      prevContacts.filter(contact => contact.id !== contactId)
     );
   };
 
-  isInPhonebook = name => {
-    const { contacts } = this.state;
+  const searchContact = e => {
+    const filter = e.target.value;
+    setFilter (filter);
+  };
+
+   const getFilteredContacts = () => {
+    const normalizedFilter = filter.toLowerCase();
+
+    return contacts.filter(contact =>
+      contact.name.toLowerCase().includes(normalizedFilter)
+    );
+  };
+
+  const isInPhonebook = name => {
     return contacts.find(
       contact => contact.name.toLowerCase() === name.toLowerCase()
     );
   };
 
-  render() {
-    const filteredContacts = this.getFilteredContacts();
-    const { filter } = this.state;
     return (
       <div className="container">
         <h1 className="phonebookTitle">Phonebook</h1>
-        <ContactForm onAddContact={this.addContact}></ContactForm>
+        <ContactForm onAddContact={addContact}></ContactForm>
         <h2 className="contactsTitle">Contacts</h2>
-        {this.state.contacts.length !== 0 && (
-          <Contactlist
-            contacts={filteredContacts}
-            onDeleteContact={this.deleteContact}
-          ></Contactlist>
+        {contacts && contacts.length !== 0 && (
+          <ContactList
+            contacts={getFilteredContacts}
+            onDeleteContact={deleteContact}
+          ></ContactList>
         )}
-        {this.state.contacts.length > 1 && (
+        {contacts && contacts.length > 1 && (
           <SearchFilter
             filter={filter}
-            onHandleChange={this.searchContact}
+            onHandleChange={searchContact}
           ></SearchFilter>
         )}
       </div>
     );
   }
-}

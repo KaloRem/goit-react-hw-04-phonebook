@@ -1,34 +1,43 @@
-import { Component } from 'react';
-import css from './ContactForm.module.css';
+import { useState } from 'react';
+import styles from './ContactForm.module.css';
 
-export class ContactForm extends Component {
-  state = {
-    name: '',
-    number: '',
-  };
+export const ContactForm = ({ onAddContact }) => {
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
 
-  onHandleSubmit = e => {
+  const onHandleSubmit = e => {
     e.preventDefault();
-    this.props.onAddContact({ ...this.state });
-    this.setState({ name: this.state.name, number: this.state.number });
+    onAddContact({ name, number });
+    setName('');
+    setNumber('');
+    const form = e.currentTarget;
+    form.reset();
   };
 
-  saveName = e => {
-    const { name, value } = e.target;
-    this.setState({ [name]: value });
+  const saveName = e => {
+    const { value, name } = e.currentTarget;
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+      case 'number':
+        setNumber(value);
+        break;
+      default:
+        return;
+    }
   };
 
-  render() {
     return (
-      <form className={css.contactForm} onSubmit={this.onHandleSubmit}>
+      <form className={styles.contactForm} onSubmit={onHandleSubmit}>
         <label htmlFor="name">Name</label>
         <input
           type="text"
           name="name"
-          className={css.contactForm__input}
+          className={styles.contactForm_input}
           id="name"
-          value={this.name}
-          onChange={this.saveName}
+          value={name}
+          onChange={saveName}
           pattern={
             "^[a-zA-Zа-яА-Я]+(([' \\-][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
           }
@@ -38,19 +47,18 @@ export class ContactForm extends Component {
         <input
           type="tel"
           name="number"
-          className={css.contactForm__input}
+          className={styles.contactForm_input}
           id="number"
-          value={this.number}
-          onChange={this.saveName}
+          value={number}
+          onChange={saveName}
           pattern={
             '\\+?\\d{1,4}?[ .\\-\\s]?\\(?\\d{1,3}?\\)?[ .\\-\\s]?\\d{1,4}[ .\\-\\s]?\\d{1,4}[ .\\-\\s]?\\d{1,9}'
           }
           required
         />
-        <button type="submit" className={css.contactForm__button}>
+        <button type="submit" className={styles.contactForm_button}>
           Add contact
         </button>
       </form>
     );
   }
-}
